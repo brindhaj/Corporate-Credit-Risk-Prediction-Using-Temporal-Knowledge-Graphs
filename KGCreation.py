@@ -56,3 +56,39 @@ for year in [2011, 2012, 2013, 2014, 2015, 2016]:
     filename = f'credit_risk_triplets_{year}.csv'
     triplets_df.to_csv(filename, index=False)
     print(f"Saved triplets for {year} to {filename}")
+
+
+
+
+# Total number of unique entities
+unique_entities = pd.concat([triplets_df['Subject'], triplets_df['Object']]).nunique()
+
+# Relationship distribution
+relationship_counts = triplets_df['Predicate'].value_counts()
+
+# Unique values for categorical attributes
+sectors = triplets_df[triplets_df['Predicate'] == 'operatesInSector']['Object'].unique()
+ratings = triplets_df[triplets_df['Predicate'] == 'hasRating']['Object'].unique()
+
+# Extract metrics and calculate summary statistics
+metric_triplets = triplets_df[triplets_df['Predicate'] == 'hasMetric']
+metrics_df = metric_triplets['Object'].str.extract(r'(?P<metric>[\w]+): (?P<value>[-+]?[0-9]*\.?[0-9]+)')
+metrics_df['value'] = metrics_df['value'].astype(float)
+metric_stats = metrics_df.groupby('metric')['value'].describe()
+
+# Temporal distribution (if date-related entries exist)
+temporal_triplets = triplets_df[triplets_df['Predicate'] == 'reportedIn']
+temporal_triplets['Object'] = pd.to_datetime(temporal_triplets['Object'], errors='coerce')
+earliest_date = temporal_triplets['Object'].min()
+latest_date = temporal_triplets['Object'].max()
+date_distribution = temporal_triplets['Object'].dt.year.value_counts().sort_index()
+
+# Summary
+print(f"Total Unique Entities: {unique_entities}")
+print("\nRelationship Counts:\n", relationship_counts)
+print("\nSectors in Dataset:", sectors)
+print("Credit Ratings in Dataset:", ratings)
+print("\nMetric Statistics:\n", metric_stats)
+print(f"\nEarliest Date: {earliest_date}")
+print(f"Latest Date: {latest_date}")
+print("\nYearly Distribution of Dates:\n", date_distribution)
